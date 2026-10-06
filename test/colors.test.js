@@ -46,3 +46,24 @@ test('returning below the palette limit resolves previously repeated colors', ()
   const reduced = assignColors([first, duplicate], overflowing);
   assert.equal(new Set(Object.values(reduced)).size, 2);
 });
+
+test('children never use their parent color, including palette overflow and saved collisions', () => {
+  for (let parent = 0; parent < 16; parent++) {
+    for (const count of [1, 15, 16, 40]) {
+      const names = Array.from({ length: count }, (_, i) => `child-${i}`);
+      const previous = Object.fromEntries(names.map(name => [name, parent]));
+      const colors = assignColors(names, previous, 16, parent);
+      assert.ok(Object.values(colors).every(slot => slot !== parent));
+      if (count <= 15) assert.equal(new Set(Object.values(colors)).size, count);
+      assert.deepEqual(assignColors(names, JSON.parse(JSON.stringify(colors)), 16, parent), colors);
+    }
+  }
+});
+
+test('adding a nested sibling preserves existing child colors', () => {
+  const initial = assignColors(['datastore', 'math'], {}, 16, 3);
+  const next = assignColors(['aaa', 'datastore', 'math'], initial, 16, 3);
+  assert.equal(next.datastore, initial.datastore);
+  assert.equal(next.math, initial.math);
+  assert.notEqual(next.aaa, 3);
+});

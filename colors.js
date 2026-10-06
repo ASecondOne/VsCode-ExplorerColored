@@ -6,23 +6,28 @@ function hash(text) {
   return value >>> 0;
 }
 
-function assignColors(names, previous = {}, size = 16) {
+function assignColors(names, previous = {}, size = 16, parentSlot) {
   const sorted = [...new Set(names)].sort();
+  const available = Array.from({ length: size }, (_, slot) => slot).filter(slot => slot !== parentSlot);
+  if (!available.length) throw new RangeError('Palette must include a color different from the parent.');
   const result = Object.create(null);
   const used = new Set();
   // Preserve assignments of all surviving folders, even when alphabetical order changes.
   for (const name of sorted) {
     const slot = previous && Object.hasOwn(previous, name) ? previous[name] : undefined;
-    if (Number.isInteger(slot) && slot >= 0 && slot < size &&
-        (sorted.length > size || !used.has(slot))) {
+    if (Number.isInteger(slot) && available.includes(slot) &&
+        (sorted.length > available.length || !used.has(slot))) {
       result[name] = slot;
       used.add(slot);
     }
   }
   for (const name of sorted) {
     if (Object.hasOwn(result, name)) continue;
-    let slot = hash(name) % size;
-    for (let i = 0; used.has(slot) && i < size; i++) slot = (slot + 1) % size;
+    const start = hash(name) % available.length;
+    let slot = available[start];
+    for (let i = 1; used.has(slot) && i < available.length; i++) {
+      slot = available[(start + i) % available.length];
+    }
     result[name] = slot;
     used.add(slot);
   }

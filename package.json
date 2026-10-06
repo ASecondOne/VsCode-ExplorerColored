@@ -1,8 +1,8 @@
 {
   "name": "src-folder-colors",
   "displayName": "Src Folder Colors",
-  "description": "Color Explorer file and folder names by their first-level directory under src.",
-  "version": "0.1.0",
+  "description": "Color Explorer names by their containing folder, with distinct parent and child colors.",
+  "version": "0.2.0",
   "publisher": "local-tools",
   "repository": {
     "type": "git",
@@ -51,7 +51,7 @@
           "type": "boolean",
           "default": true,
           "scope": "resource",
-          "description": "Color Explorer names by their first-level directory under the configured root."
+          "description": "Color Explorer names by their containing folder, with subfolders always different from their parent."
         }
       }
     },

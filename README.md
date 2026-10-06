@@ -1,6 +1,6 @@
 # Src Folder Colors
 
-A dependency-free JavaScript VS Code extension that colors Explorer **name text** according to the first directory under `src/` (or another configured root).
+A dependency-free JavaScript VS Code extension that colors Explorer **name text** by its containing folder under `src/` (or another configured root). Every subfolder gets a color different from its immediate parent.
 
 ## Supported API and limits
 
@@ -19,14 +19,15 @@ File decorations are resource-wide: other VS Code views that display file decora
 
 ## Behavior
 
-- Automatically discovers immediate directories under each workspace folder's `src`.
-- Colors each such directory and every file/subdirectory below it, at any depth.
+- Automatically discovers directories at every depth under each workspace folder's `src`.
+- Each folder gets its own color. Files match their immediate containing folder. A child folder always uses a different palette color from its parent, even when sibling colors must repeat.
 - Leaves the root itself, loose files directly in it, and everything outside it uncolored.
 - Uses 16 pastel colors for dark themes, with darker counterparts for light themes.
-- Hashes folder names and resolves collisions in sorted order on first discovery. Stores assignments in VS Code workspace state, so restarts and new folders preserve existing colors. No recursive disk scan is required.
-- Assigns distinct palette slots for up to 16 directories. Above that, colors repeat; this is a finite palette, not an unlimited uniqueness guarantee. Returning to 16 or fewer resolves any remaining duplicates, which can recolor a formerly duplicated folder. Similar shades may be difficult to distinguish, especially with color-vision differences.
+- Hashes folder names and resolves sibling collisions in sorted order on first discovery, excluding the parent's color. Stores assignments in VS Code workspace state, so restarts and new folders preserve existing colors. Upgrading from 0.1 preserves the top-level assignments.
+- Assigns distinct palette slots for up to 16 top-level siblings and 15 siblings below a colored parent. Beyond those limits sibling colors repeat, but never the parent's color. Returning below a sibling limit resolves duplicates, which can recolor a formerly duplicated folder. Unrelated branches may share colors. Similar shades may be difficult to distinguish, especially with color-vision differences. User palette overrides and other decoration providers can affect visible distinctions.
 - Deleted folders release their assignment. Renaming is treated as deleting and adding, so the renamed folder may change color. A fresh workspace/profile or cleared extension state can produce different collision resolutions from an existing workspace with a different folder history.
-- Watches creation/deletion, including a root created after activation; renames are handled as filesystem changes. Configuration and workspace-folder changes refresh automatically.
+- Scans directories recursively (not file contents), and watches creation/deletion at every depth, including a root created after activation; renames are handled as filesystem changes. Refreshes are debounced. Configuration and workspace-folder changes refresh automatically. Very large trees can take longer to scan.
+- Directory symlinks are not traversed, avoiding cycles and paths outside the root. Their label uses the containing folder color; their descendants are not assigned colors by this extension.
 - Uses URI-based filesystem APIs for remote workspaces; watcher delivery still depends on the filesystem provider and watcher exclusions. Run **Src Folder Colors: Refresh** if an external change is missed.
 
 ## Run locally
@@ -43,7 +44,7 @@ Alternatively, with the `code` CLI:
 code --new-window --extensionDevelopmentPath="/absolute/path/to/src-folder-colors" "/absolute/path/to/your-project"
 ```
 
-For example, `src/executers` and every descendant get one color, while `src/i_core`, `src/psychoparser`, and `src/symbolresolver` each get another.
+For example, `src/i_core` and `src/i_core/math.rs` share one color. `src/i_core/datastore` and its directly contained files share a different color. A further subfolder such as `datastore/cache` gets a color different from `datastore`.
 
 ## Settings
 
@@ -74,7 +75,7 @@ There are IDs `srcFolderColors.color1` through `srcFolderColors.color16`.
 
 With Node.js 18 or newer, run `npm test` in this extension directory. No dependencies are installed.
 
-The real VS Code integration test checks recursive inheritance, loose-file exclusion, automatic create/rename/delete updates, and root/enabled settings changes. On Linux/macOS, run the following **from this extension directory** (requires a graphical VS Code session):
+The real VS Code integration test checks parent/child color differences, file inheritance, loose-file exclusion, automatic nested create/rename/delete updates, and root/enabled settings changes. On Linux/macOS, run the following **from this extension directory** (requires a graphical VS Code session):
 
 ```sh
 test_workspace=$(mktemp -d "${TMPDIR:-/tmp}/src-folder-colors-test-XXXXXX")

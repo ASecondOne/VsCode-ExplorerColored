@@ -34,9 +34,9 @@ class FolderColors {
         if (!parts) return;
         const root = vscode.Uri.joinPath(folder.uri, ...parts);
         const relative = relativePath(root, uri);
-        // Only rescan when the root, its ancestors, or direct children change.
+        // Nested directory creation/deletion can change the containing-folder color.
         if (root.toString() === uri.toString() || relativePath(uri, root) !== undefined ||
-            (relative !== undefined && !relative.includes('/'))) this.schedule();
+            relative !== undefined) this.schedule();
       };
       watcher.onDidCreate(update);
       watcher.onDidDelete(update);
@@ -60,7 +60,9 @@ class FolderColors {
   async scan() {
     if (this.disposed) return;
     const next = new Map();
-    const stored = { ...this.context.workspaceState.get('assignments.v1', {}) };
+    const saved = this.context.workspaceState.get('assignments.v2',
+      this.context.workspaceState.get('assignments.v1', {}));
+    const stored = { ...saved };
     for (const folder of vscode.workspace.workspaceFolders || []) {
       const config = vscode.workspace.getConfiguration('srcFolderColors', folder.uri);
       if (!config.get('enabled', true)) continue;
@@ -70,17 +72,36 @@ class FolderColors {
         continue;
       }
       const root = vscode.Uri.joinPath(folder.uri, ...parts);
-      let entries;
-      try {
-        entries = await vscode.workspace.fs.readDirectory(root);
-      } catch (error) {
-        if (error.code !== 'FileNotFound') console.warn('[Src Folder Colors]', root.toString(), error);
-        continue;
-      }
-      // FileType is a bitmask: directory symlinks may include SymbolicLink as well.
-      const names = entries.filter(([, type]) => (type & vscode.FileType.Directory) !== 0).map(([name]) => name);
       const key = root.toString();
-      const assignments = assignColors(names, stored[key], PALETTE_SIZE);
+      const previous = stored[key] || {};
+      const assignments = Object.create(null);
+      const pending = [{ uri: root, path: '', slot: undefined }];
+      while (pending.length && !this.disposed) {
+        const parent = pending.pop();
+        let entries;
+        try {
+          entries = await vscode.workspace.fs.readDirectory(parent.uri);
+        } catch (error) {
+          if (error.code !== 'FileNotFound') console.warn('[Src Folder Colors]', parent.uri.toString(), error);
+          continue;
+        }
+        // Do not follow directory symlinks: they may form cycles or escape the root.
+        const names = entries.filter(([, type]) =>
+          (type & vscode.FileType.Directory) !== 0 && (type & vscode.FileType.SymbolicLink) === 0
+        ).map(([name]) => name);
+        const prefix = parent.path ? parent.path + '/' : '';
+        const oldSiblings = Object.create(null);
+        for (const name of names) {
+          if (Object.hasOwn(previous, prefix + name)) oldSiblings[name] = previous[prefix + name];
+        }
+        const siblings = assignColors(names, oldSiblings, PALETTE_SIZE, parent.slot);
+        for (const name of names.sort()) {
+          const path = prefix + name;
+          const slot = siblings[name];
+          assignments[path] = slot;
+          pending.push({ uri: vscode.Uri.joinPath(parent.uri, name), path, slot });
+        }
+      }
       stored[key] = assignments;
       next.set(folder.uri.toString(), { root, assignments });
     }
@@ -88,8 +109,8 @@ class FolderColors {
     this.roots = next;
     // Undefined invalidates all cached decorations, including old descendants.
     this.changed.fire(undefined);
-    if (JSON.stringify(stored) !== JSON.stringify(this.context.workspaceState.get('assignments.v1', {}))) {
-      await this.context.workspaceState.update('assignments.v1', stored);
+    if (JSON.stringify(stored) !== JSON.stringify(this.context.workspaceState.get('assignments.v2', {}))) {
+      await this.context.workspaceState.update('assignments.v2', stored);
     }
   }
 
@@ -99,7 +120,9 @@ class FolderColors {
     if (!state) return;
     const relative = relativePath(state.root, uri);
     if (!relative) return;
-    const name = relative.split('/')[0];
+    // A directory has its own slot; files use only their immediate containing directory.
+    const name = Object.hasOwn(state.assignments, relative)
+      ? relative : relative.slice(0, Math.max(0, relative.lastIndexOf('/')));
     const slot = state.assignments[name];
     if (!Object.hasOwn(state.assignments, name) || !Number.isInteger(slot)) return;
     const decoration = new vscode.FileDecoration(

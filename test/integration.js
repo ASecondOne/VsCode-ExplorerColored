@@ -28,13 +28,17 @@ exports.run = async function () {
   await write('src/executers/executer.rs');
   await write('src/i_core/datastore/helpers.rs');
   await write('src/loose.rs');
-  await until(() => color('src/symbolresolver') && color('src/i_core'));
+  await until(() => color('src/symbolresolver') && color('src/i_core/datastore') &&
+    color('src/i_core/datastore') !== color('src/i_core'));
   const names = ['executers', 'i_core', 'psychoparser', 'symbolresolver'];
   const original = names.map(name => color(`src/${name}`));
   assert.equal(new Set(original).size, 4);
   assert.equal(color('src/executers/executer.rs'), original[0]);
-  assert.equal(color('src/i_core/datastore'), original[1]);
-  assert.equal(color('src/i_core/datastore/helpers.rs'), original[1]);
+  const datastoreColor = color('src/i_core/datastore');
+  assert.notEqual(datastoreColor, original[1]);
+  assert.equal(color('src/i_core/datastore/helpers.rs'), datastoreColor);
+  await write('src/i_core/math.rs');
+  assert.equal(color('src/i_core/math.rs'), original[1]);
   assert.equal(color('src'), undefined);
   assert.equal(color('src/loose.rs'), undefined);
   assert.equal(color('src-other/executers'), undefined);
@@ -50,6 +54,22 @@ exports.run = async function () {
   await vscode.workspace.fs.delete(uri('src/renamed'), { recursive: true });
   await until(() => !color('src/renamed'));
 
+  await mkdir('src/i_core/datastore/deep');
+  await write('src/i_core/datastore/deep/value.rs');
+  await until(() => color('src/i_core/datastore/deep') !== datastoreColor);
+  const deepColor = color('src/i_core/datastore/deep');
+  assert.ok(deepColor);
+  assert.equal(color('src/i_core/datastore/deep/value.rs'), deepColor);
+  assert.equal(color('src/i_core/datastore'), datastoreColor);
+  await vscode.workspace.fs.rename(uri('src/i_core/datastore/deep'), uri('src/i_core/datastore/renamed'));
+  await until(() => !color('src/i_core/datastore/deep/value.rs') &&
+    color('src/i_core/datastore/renamed/value.rs'));
+  assert.notEqual(color('src/i_core/datastore/renamed'), datastoreColor);
+  await vscode.workspace.fs.delete(uri('src/i_core/datastore/renamed'), { recursive: true });
+  await until(() => !color('src/i_core/datastore/renamed/value.rs'));
+  await vscode.commands.executeCommand('srcFolderColors.refresh');
+  assert.equal(color('src/i_core/datastore'), datastoreColor);
+
   const config = vscode.workspace.getConfiguration('srcFolderColors', workspace.uri);
   await mkdir('lib/module/deep');
   await config.update('root', 'lib', vscode.ConfigurationTarget.Workspace);
@@ -60,5 +80,6 @@ exports.run = async function () {
   await until(() => color('lib/module'));
   await vscode.commands.executeCommand('srcFolderColors.refresh');
   assert.ok(color('lib/module'));
-  console.log('PASS: real extension-host integration (inheritance, exclusions, live add/rename/delete, settings).');
+  assert.notEqual(color('lib/module/deep'), color('lib/module'));
+  console.log('PASS: real extension-host integration (parent/child distinction, file inheritance, nested live updates, settings).');
 };
