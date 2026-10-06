@@ -1,0 +1,221 @@
+{
+  "name": "src-folder-colors",
+  "displayName": "Src Folder Colors",
+  "description": "Color Explorer file and folder names by their first-level directory under src.",
+  "version": "0.1.0",
+  "publisher": "local-tools",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ASecondOne/VsCode-ExplorerColored.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "scripts": {
+    "test": "node --test test/colors.test.js"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "srcFolderColors.refresh",
+        "title": "Src Folder Colors: Refresh"
+      }
+    ],
+    "configuration": {
+      "title": "Src Folder Colors",
+      "properties": {
+        "srcFolderColors.root": {
+          "type": "string",
+          "default": "src",
+          "scope": "resource",
+          "description": "Directory relative to each workspace folder, e.g. src or packages/app/src. Absolute paths and .. segments are not supported."
+        },
+        "srcFolderColors.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Color Explorer names by their first-level directory under the configured root."
+        }
+      }
+    },
+    "colors": [
+      {
+        "id": "srcFolderColors.color1",
+        "description": "Folder palette color 1.",
+        "defaults": {
+          "dark": "#89B4FA",
+          "light": "#285EA8",
+          "highContrast": "#89B4FA",
+          "highContrastLight": "#285EA8"
+        }
+      },
+      {
+        "id": "srcFolderColors.color2",
+        "description": "Folder palette color 2.",
+        "defaults": {
+          "dark": "#A6E3A1",
+          "light": "#397539",
+          "highContrast": "#A6E3A1",
+          "highContrastLight": "#397539"
+        }
+      },
+      {
+        "id": "srcFolderColors.color3",
+        "description": "Folder palette color 3.",
+        "defaults": {
+          "dark": "#F9E2AF",
+          "light": "#806000",
+          "highContrast": "#F9E2AF",
+          "highContrastLight": "#806000"
+        }
+      },
+      {
+        "id": "srcFolderColors.color4",
+        "description": "Folder palette color 4.",
+        "defaults": {
+          "dark": "#F5C2E7",
+          "light": "#99427F",
+          "highContrast": "#F5C2E7",
+          "highContrastLight": "#99427F"
+        }
+      },
+      {
+        "id": "srcFolderColors.color5",
+        "description": "Folder palette color 5.",
+        "defaults": {
+          "dark": "#94E2D5",
+          "light": "#24736B",
+          "highContrast": "#94E2D5",
+          "highContrastLight": "#24736B"
+        }
+      },
+      {
+        "id": "srcFolderColors.color6",
+        "description": "Folder palette color 6.",
+        "defaults": {
+          "dark": "#FAB387",
+          "light": "#A14D1C",
+          "highContrast": "#FAB387",
+          "highContrastLight": "#A14D1C"
+        }
+      },
+      {
+        "id": "srcFolderColors.color7",
+        "description": "Folder palette color 7.",
+        "defaults": {
+          "dark": "#CBA6F7",
+          "light": "#7950AA",
+          "highContrast": "#CBA6F7",
+          "highContrastLight": "#7950AA"
+        }
+      },
+      {
+        "id": "srcFolderColors.color8",
+        "description": "Folder palette color 8.",
+        "defaults": {
+          "dark": "#89DCEB",
+          "light": "#237080",
+          "highContrast": "#89DCEB",
+          "highContrastLight": "#237080"
+        }
+      },
+      {
+        "id": "srcFolderColors.color9",
+        "description": "Folder palette color 9.",
+        "defaults": {
+          "dark": "#F38BA8",
+          "light": "#AD3558",
+          "highContrast": "#F38BA8",
+          "highContrastLight": "#AD3558"
+        }
+      },
+      {
+        "id": "srcFolderColors.color10",
+        "description": "Folder palette color 10.",
+        "defaults": {
+          "dark": "#B4BEFE",
+          "light": "#555EB0",
+          "highContrast": "#B4BEFE",
+          "highContrastLight": "#555EB0"
+        }
+      },
+      {
+        "id": "srcFolderColors.color11",
+        "description": "Folder palette color 11.",
+        "defaults": {
+          "dark": "#D6D889",
+          "light": "#687020",
+          "highContrast": "#D6D889",
+          "highContrastLight": "#687020"
+        }
+      },
+      {
+        "id": "srcFolderColors.color12",
+        "description": "Folder palette color 12.",
+        "defaults": {
+          "dark": "#EBA0AC",
+          "light": "#A24556",
+          "highContrast": "#EBA0AC",
+          "highContrastLight": "#A24556"
+        }
+      },
+      {
+        "id": "srcFolderColors.color13",
+        "description": "Folder palette color 13.",
+        "defaults": {
+          "dark": "#74C7EC",
+          "light": "#256990",
+          "highContrast": "#74C7EC",
+          "highContrastLight": "#256990"
+        }
+      },
+      {
+        "id": "srcFolderColors.color14",
+        "description": "Folder palette color 14.",
+        "defaults": {
+          "dark": "#F2CDCD",
+          "light": "#945557",
+          "highContrast": "#F2CDCD",
+          "highContrastLight": "#945557"
+        }
+      },
+      {
+        "id": "srcFolderColors.color15",
+        "description": "Folder palette color 15.",
+        "defaults": {
+          "dark": "#B8D6B0",
+          "light": "#4F7342",
+          "highContrast": "#B8D6B0",
+          "highContrastLight": "#4F7342"
+        }
+      },
+      {
+        "id": "srcFolderColors.color16",
+        "description": "Folder palette color 16.",
+        "defaults": {
+          "dark": "#D8B88B",
+          "light": "#795B32",
+          "highContrast": "#D8B88B",
+          "highContrastLight": "#795B32"
+        }
+      }
+    ]
+  }
+}
